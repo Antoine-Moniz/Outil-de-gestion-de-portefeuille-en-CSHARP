@@ -20,27 +20,70 @@ Librairies utilisées
 - System.Data.SQLite (ou Microsoft.Data.Sqlite selon l'environnement) pour persistance
 - NUnit + NUnit3TestAdapter pour les tests
 
-Formules et indicateurs (rappel)
---------------------------------
-Notation : N = nombre de périodes (périodicité journalière), m = nombre d'actifs
-- Rendement simple d'une période : r_t = P_t / P_{t-1} - 1
-- Rendement attendu (moyenne simple périodique) : E[R] = mean(r_t)
-- Volatilité périodique (σ_periodic) = stddev(r_t)
-- Annualisation (approx. journalière) :
-  - AnnualReturn ≈ (∏(1+r_t))^{252/N} - 1  (ou mean*252 pour approximation)
-  - AnnualVol ≈ σ_periodic * sqrt(252)
+**Formules et indicateurs (rappel)**
 
-- Sharpe (annualisé) : Sharpe = (AnnualReturn - r_f) / AnnualVol
-- Alpha/Beta : issues de la régression linéaire r_p = α + β r_b + ε entre rendements périodiques du portefeuille et du benchmark
-- Information Ratio : IR = mean(r_p - r_b) / std(r_p - r_b)
-- Treynor : Treynor = (AnnualReturn - r_f) / β
-- Max Drawdown : maximum drawdown sur la série cumulative
+Notation : \(N\) = nombre de périodes (périodicité journalière), \(m\) = nombre d'actifs.
 
+- Rendement simple d'une période :
+  \[
+    r_t = \frac{P_t}{P_{t-1}} - 1
+  \]
+
+- Rendement attendu (moyenne simple périodique) :
+  \[
+    \mathbb{E}[R] = \frac{1}{N}\sum_{t=1}^{N} r_t
+  \]
+
+- Volatilité périodique (écart-type) :
+  \[
+    \sigma_{\text{periodic}} = \sqrt{\frac{1}{N-1}\sum_{t=1}^{N} (r_t - \mathbb{E}[R])^2}
+  \]
+
+- Annualisation (approx. journalière, \(252\) jours de trading) :
+  \[
+    \text{AnnualReturn} \approx \left(\prod_{t=1}^{N} (1 + r_t)\right)^{\frac{252}{N}} - 1
+    \quad\text{(ou approx. } \mathbb{E}[R]\times 252\text{)}
+  \]
+  \[
+    \text{AnnualVol} \approx \sigma_{\text{periodic}}\sqrt{252}
+  \]
+
+Indicateurs dérivés :
+- Sharpe (annualisé) :
+  \[
+    \text{Sharpe} = \frac{\text{AnnualReturn} - r_f}{\text{AnnualVol}}
+  \]
+  où \(r_f\) est le taux sans risque annualisé.
+
+- Alpha / Beta : issus d'une régression linéaire entre rendements périodiques du portefeuille \(r_p\) et du benchmark \(r_b\) :
+  \[
+    r_{p,t} = \alpha + \beta\, r_{b,t} + \varepsilon_t
+  \]
+
+- Information Ratio (IR) :
+  \[
+    \text{IR} = \frac{\overline{r_p - r_b}}{\sigma(r_p - r_b)}
+  \]
+  (on peut annualiser la moyenne et l'écart‑type si nécessaire).
+
+- Treynor :
+  \[
+    \text{Treynor} = \frac{\text{AnnualReturn} - r_f}{\beta}
+  \]
+
+- Max Drawdown : défini sur la série cumulative de la valeur du portefeuille \(V_t\) :
+  \[
+    \text{MaxDrawdown} = \max_{t} \left( \frac{\max_{s \le t} V_s - V_t}{\max_{s \le t} V_s} \right)
+  \]
+
+Notes pratiques :
+- Pour les rendements périodiques, utilise des rendements simples (log ou simple selon préférence), mais reste cohérent lors des annualisations et des calculs de volatilité.
+- Pour des petits échantillons, préfère l'estimateur sans biais (\(N-1\)) pour l'écart‑type.
+- L'annualisation par produit (géométrique) est plus précise que la simple multiplication quand les rendements sont volatils.
 Installation et exécution
 -------------------------
 Pré-requis :
 - Windows (pour WPF), .NET 8 SDK installé
-- (optionnel) pandoc pour convertir la documentation markdown en PDF
 
 Build & run :
 ```powershell
@@ -56,15 +99,6 @@ Tests :
 dotnet test
 ```
 
-Conversion docs -> PDF (optionnel, nécessite pandoc + LaTeX pour qualité PDF) :
-```powershell
-# installer pandoc et une distribution LaTeX (TeX Live / MikTeX)
-# convertir README
-pandoc README.md -o README.pdf
-# convertir notes
-pandoc Docs/Note_technique.md -o Docs/Note_technique.pdf
-pandoc Docs/Note_fonctionnelle.md -o Docs/Note_fonctionnelle.pdf
-```
 
 Usage rapide
 ------------
