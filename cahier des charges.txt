@@ -1,0 +1,120 @@
+Cahier des charges – Projet final C#
+Projet : Outil de gestion et d’optimisation de portefeuilles financiers avec récupération automatique des données Yahoo Finance
+Réalisé par : Antoine Moniz et Adam Bousselmame
+Formation : Master 272 – Université Paris Dauphine – 2025-2026
+Encadrant : Laurent Davoust
+
+
+1.  Introduction au problème posé
+1.1. Contexte
+Dans un contexte de volatilité accrue des marchés financiers, la gestion de portefeuille et l’optimisation du couple rendement/risque sont au cœur des stratégies d’investissement.
+
+Les étudiants et analystes financiers ont souvent besoin d’un outil simple leur permettant de :
+	gérer un portefeuille d’actifs,
+	analyser sa performance et optimiser la répartition des poids selon les principes de Markowitz.
+Ce projet a pour but de développer en C# (programmation orientée objet) un logiciel interactif capable de :
+	récupérer automatiquement les données financières réelles (prix historiques, prix actuels) via Yahoo Finance,
+	calculer les indicateurs de performance du portefeuille et proposer une allocation optimale selon la théorie moyenne-variance.
+
+1.2. Objectifs du projet
+	Créer une application C# autonome capable de gérer plusieurs portefeuilles.
+	Offrir la possibilité à l’utilisateur de saisir les tickers d’actifs financiers et d’obtenir leurs prix historiques.
+	Calculer automatiquement :
+	les rendements attendus,
+	la volatilité et la covariance,
+	le ratio de Sharpe.
+	Fournir une optimisation de portefeuille (Markowitz) et afficher la frontière efficiente.
+
+1.3. Limites générales du projet
+	Le projet ne se connecte qu’à Yahoo Finance.
+	Aucune persistance dans une base de données (sauvegarde locale uniquement).
+	Nécessite une connexion internet pour la récupération initiale des données.
+
+
+
+1.4. Sources théoriques
+	Markowitz, H. (1952). Portfolio Selection. The Journal of Finance.
+	Documentation de la librairie YahooFinanceApi (NuGet).
+	Documentation Math.NET Numerics pour les calculs matriciels.
+2.  Expression fonctionnelle du besoin
+Fonctionnalité	Description	Objectif	Critères de réussite	Contraintes / dépendances
+F1 – Saisie des tickers	L’utilisateur saisit une liste de symboles (ex : AAPL, MSFT, SAN.PA)	Définir le portefeuille à étudier	Les tickers sont valides et reconnus par Yahoo Finance	Vérification du format
+F2 – Téléchargement automatique	Récupération des prix historiques via Yahoo Finance	Obtenir les données de marché réelles	Données cohérentes, sans erreur réseau	Connexion internet requise
+F3 – Calculs de performance individuelle	Calcul des rendements moyens et volatilités de chaque actif	Déterminer les caractéristiques des actifs	Résultats corrects et affichés	Données non manquantes
+F4 – Calcul du portefeuille global	Calcul du rendement, volatilité et ratio de Sharpe du portefeuille	Évaluer la performance globale	Calculs cohérents avec les poids	Matrice de covariance valide
+F5 – Optimisation Markowitz	Trouver les poids optimaux maximisant le ratio de Sharpe	Proposer une allocation optimale	Résultats réalistes (poids positifs, somme = 1)	Utilisation de Math.NET
+F6 – Visualisation graphique	Affichage de la frontière efficiente et du portefeuille optimal	Représenter la relation rendement/risque	Courbe affichée sans erreur	Utilisation de OxyPlot / Chart
+F7 – Gestion du portefeuille	Sauvegarde et rechargement local des portefeuilles	Réutiliser ses analyses	Fichiers CSV/JSON créés	Utilisation de CSVHelper
+F8 – Interface utilisateur	Interface ergonomique en WPF/WinForms	Simplifier l’expérience utilisateur	Navigation intuitive	Composants .NET standards
+
+
+3. 🧮 Solution proposée
+3.1. Données utilisées
+Les données seront obtenues via la librairie YahooFinanceApi pour chaque ticker renseigné :
+	Prix de clôture quotidiens sur une période d’un an (ajustés).
+	Dernier prix disponible pour valoriser le portefeuille.
+
+3.2. Modèle mathématique
+Formules :
+	Rendement espéré :
+E(R_p)=∑_(i=1)^n w_i E(R_i)
+
+	Variance du portefeuille :
+σ_p^2=w^T Σw
+
+	Ratio de Sharpe :
+S=(E(R_p)-R_f)/σ_p 
+
+	Optimisation (Markowitz) :
+Maximiser Ssous les contraintes :
+∑_i w_i=1,w_i≥0
+
+3.3. Structure orientée objet (OOP)
+L’application repose sur une architecture orientée objet claire et modulaire, organisée autour de plusieurs classes principales : Asset, Portfolio, DataProvider, Optimizer et UIManager.
+Chaque classe correspond à une responsabilité bien définie, ce qui facilite la maintenance, l’évolution et la réutilisation du code.
+Description des classes principales
+1. Classe Asset
+Représente un actif financier (action, obligation, ETF, etc.).
+	Attributs : nom, ticker, rendement espéré, volatilité, liste des prix historiques.
+	Méthodes principales :
+	ComputeReturn() → calcule le rendement moyen à partir des prix.
+	ComputeVol() → calcule la volatilité de l’actif.
+2. Classe Portfolio
+Représente un portefeuille constitué de plusieurs actifs.
+	Attributs : liste d’actifs, matrice de covariance.
+	Méthodes principales :
+	ComputeReturn() → calcule le rendement global.
+	ComputeVol() → calcule la volatilité du portefeuille.
+	SharpeRatio() → calcule le ratio de Sharpe.
+	Optimize() → appelle l’optimiseur pour trouver les poids optimaux.
+3. Classe DataProvider
+Gère la récupération des données depuis Yahoo Finance.
+	Méthodes principales :
+	GetPrices(ticker, startDate, endDate) → récupère les prix historiques.
+	GetReturns(ticker) → calcule les rendements journaliers à partir des prix.
+4. Classe Optimizer
+Implémente les calculs d’optimisation de portefeuille selon Markowitz.
+	Attributs : portefeuille à optimiser.
+	Méthode principale :
+	FindOptimal() → maximise le ratio de Sharpe sous contraintes (poids positifs, somme = 1).
+5. Classe UIManager
+Contrôle l’interface graphique et la visualisation des résultats.
+	Méthodes principales :
+	DisplayGraph() → affiche la frontière efficiente et les points du portefeuille.
+	DisplayResults() → met à jour les indicateurs et statistiques visibles à l’écran.
+
+	4.  Éléments annexes
+
+	4.1. Budget et délais
+Tâche	Durée prévue	Responsable
+Étude du sujet et conception	2 jours	Antoine & Adam
+Intégration Yahoo Finance	3 jours	Adam
+Calculs financiers et modèle Markowitz	3 jours	Antoine
+Interface graphique et graphes	4 jours	Adam
+Tests et débogage	2 jours	Antoine & Adam
+Documentation et présentation	2 jours	Antoine & Adam
+Total estimé	16 jours	—
+
+
+
+Si on a le temps rajouter des strategies values momentum carry

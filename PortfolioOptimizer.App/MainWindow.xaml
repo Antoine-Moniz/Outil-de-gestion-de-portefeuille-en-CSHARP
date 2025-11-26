@@ -1,0 +1,169 @@
+﻿<Window x:Class="PortfolioOptimizer.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:local="clr-namespace:PortfolioOptimizer.App"
+    xmlns:oxy="http://oxyplot.org/wpf"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="360" MinWidth="280" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Panneau gauche : contrôles et log (scrollable si la fenêtre est petite) -->
+        <ScrollViewer Grid.Column="0" Margin="10" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel VerticalAlignment="Top" Margin="0,0,0,8">
+
+                <!-- Configuration group -->
+                <GroupBox Header="Configuration" Margin="0,0,0,8">
+                    <StackPanel>
+                        <TextBlock FontWeight="Bold" Margin="0,0,0,6">Tickers (séparés par des virgules)</TextBlock>
+                        <TextBox x:Name="TickerTextBox" Width="320" Text="AAPL, MSFT, NVDA" AcceptsReturn="False" ToolTip="Ex: AAPL, MSFT, NVDA" />
+
+                        <TextBlock FontSize="12" Margin="0,8,0,4">Période : renseignez les deux dates pour fixer une fenêtre, sinon la dernière année est utilisée.</TextBlock>
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0" VerticalAlignment="Center">
+                            <StackPanel>
+                                <TextBlock FontSize="12" Margin="0,0,0,2">Date début (optionnel)</TextBlock>
+                                <DatePicker x:Name="StartDatePicker" Width="150" />
+                            </StackPanel>
+                            <StackPanel Margin="8,0,0,0">
+                                <TextBlock FontSize="12" Margin="0,0,0,2">Date fin (optionnel)</TextBlock>
+                                <DatePicker x:Name="EndDatePicker" Width="150" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <Button x:Name="DownloadButton" Content="Télécharger" Width="110" Click="DownloadButton_Click" ToolTip="Télécharge les séries pour les tickers renseignés" />
+                            <Button x:Name="OptimizeButton" Content="Optimiser" Width="110" Margin="8,0,0,0" Click="OptimizeButton_Click" IsEnabled="False" ToolTip="Lancer l'optimisation selon le mode sélectionné" />
+                            <StackPanel Orientation="Vertical" Margin="8,0,0,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock VerticalAlignment="Center" Margin="0,0,6,0">Strategy:</TextBlock>
+                                    <ComboBox x:Name="StrategyComboBox" Width="150" SelectedIndex="0" ToolTip="Choisir la stratégie pour 'Use Strategy Weights'">
+                                        <ComboBoxItem>Equal</ComboBoxItem>
+                                        <ComboBoxItem>Momentum</ComboBoxItem>
+                                        <ComboBoxItem>Value</ComboBoxItem>
+                                        <ComboBoxItem>Carry</ComboBoxItem>
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                    <TextBlock VerticalAlignment="Center" Margin="0,0,6,0">Mode:</TextBlock>
+                                    <ComboBox x:Name="OptimizeModeComboBox" Width="170" SelectedIndex="0" ToolTip="Mode d'optimisation">
+                                        <ComboBoxItem>Use Strategy Weights</ComboBoxItem>
+                                        <ComboBoxItem>Maximize Sharpe</ComboBoxItem>
+                                        <ComboBoxItem>Minimize Variance</ComboBoxItem>
+                                    </ComboBox>
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- Export / Import group -->
+                <GroupBox Header="Exporter / Importer" Margin="0,0,0,8">
+                    <StackPanel Orientation="Horizontal" Margin="6">
+                        <Button x:Name="ExportButton" Content="Exporter" Width="110" Click="ExportButton_Click" IsEnabled="False" ToolTip="Exporter le portefeuille affiché (JSON/CSV)" />
+                        <Button x:Name="ImportButton" Content="Importer" Width="110" Margin="8,0,0,0" Click="ImportButton_Click" ToolTip="Importer un portefeuille depuis un fichier" />
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- Persistence group -->
+                <GroupBox Header="Portefeuilles enregistrés" Margin="0,0,0,8">
+                    <StackPanel Margin="6">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <ComboBox x:Name="SavedPortfoliosComboBox" Width="200" IsEditable="True" IsReadOnly="False" ToolTip="Sélectionnez ou saisissez un nom de portefeuille" />
+                            <Button x:Name="SaveToDbButton" Content="Sauvegarder" Width="110" Margin="8,0,0,0" Click="SaveToDbButton_Click" ToolTip="Sauvegarder le portefeuille courant dans la base" />
+                            <Button x:Name="LoadFromDbButton" Content="Charger" Width="90" Margin="8,0,0,0" Click="LoadFromDbButton_Click" ToolTip="Charger le portefeuille sélectionné" />
+                            <Button x:Name="DeletePortfolioButton" Content="Supprimer" Width="90" Margin="8,0,0,0" Click="DeletePortfolioButton_Click" ToolTip="Supprimer le portefeuille sélectionné de la base" />
+                        </StackPanel>
+
+                        <TextBlock FontSize="12" Margin="0,6,0,4">Sélection multiple possible (Ctrl / Shift). Double-cliquez sur un nom pour charger.</TextBlock>
+                        <ListBox x:Name="SavedPortfolioListBox" Height="140" Width="320" SelectionMode="Extended" SelectionChanged="SavedPortfolioListBox_SelectionChanged" ToolTip="Sélectionnez un ou plusieurs portefeuilles pour comparer" />
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- Composition group -->
+                <GroupBox Header="Composition du portefeuille" Margin="0,0,0,8">
+                    <StackPanel Margin="6">
+                        <ListView x:Name="CompositionListView" Height="140" Width="320">
+                        </ListView>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- Journal -->
+                <GroupBox Header="Journal d'exécution" Margin="0,0,0,8">
+                    <TextBox x:Name="OutputTextBox" Height="160" Width="320" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" AcceptsReturn="True" FontFamily="Consolas" FontSize="12" Background="#FFF8F8F8"/>
+                </GroupBox>
+
+            </StackPanel>
+        </ScrollViewer>
+    <!-- GridSplitter pour permettre le redimensionnement manuel du panneau gauche -->
+    <GridSplitter Grid.Column="0" Width="6" HorizontalAlignment="Right" VerticalAlignment="Stretch" Background="#FFE0E0E0" ShowsPreview="True" />
+
+        <!-- Panneau droit : onglets (Frontière / Performance avancée) -->
+        <Grid Grid.Column="1" Margin="10">
+            <TabControl>
+                    <TabItem Header="Comparaison">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <!-- Metrics bar (auto height) then the plot -->
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="0" />
+                            </Grid.RowDefinitions>
+
+                            <!-- Horizontal metrics bar showing a compact summary per portfolio -->
+                       <!-- Utiliser un WrapPanel pour que les blocs de métriques se replient sur la ligne suivante si l'espace est limité.
+                           Autoriser le défilement vertical si le contenu replié dépasse la hauteur disponible. -->
+                            <ScrollViewer Grid.Row="0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                                <ItemsControl x:Name="MetricsBar">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </ItemsControl>
+                            </ScrollViewer>
+
+                            <oxy:PlotView x:Name="ComparePlotView" Grid.Row="1" />
+                            <!-- Keep the detailed metrics grid hidden (legacy) -->
+                            <DataGrid x:Name="MetricsDataGrid" Grid.Row="2" AutoGenerateColumns="True" IsReadOnly="True" Visibility="Collapsed" />
+                        </Grid>
+                    </TabItem>
+                    <TabItem Header="Performance avancée">
+                        <ScrollViewer>
+                        <StackPanel Margin="8">
+                            <TextBlock FontWeight="Bold" Margin="0,0,0,6">Benchmark (ticker)</TextBlock>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                <TextBox x:Name="BenchmarkTextBox" Width="200" Text="^GSPC" />
+                            </StackPanel>
+
+                            <TextBlock FontWeight="Bold" Margin="0,8,0,4">Résultats :</TextBlock>
+                            <StackPanel Orientation="Vertical">
+                                <TextBlock x:Name="AlphaText" Text="Alpha: -" Margin="0,4,0,0" />
+                                <TextBlock x:Name="BetaText" Text="Beta: -" Margin="0,4,0,0" />
+                                <TextBlock x:Name="TreynorText" Text="Treynor: -" Margin="0,4,0,0" />
+                                <TextBlock x:Name="InfoRatioText" Text="Information Ratio (annualisé): -" Margin="0,4,0,0" />
+                                <TextBlock x:Name="MaxDdText" Text="Max Drawdown: -" Margin="0,4,0,0" />
+                                <TextBlock x:Name="AnnualReturnText" Text="Rendement annualisé: -" Margin="0,6,0,0" />
+                                <TextBlock x:Name="AnnualVolText" Text="Volatilité annualisée: -" Margin="0,4,0,0" />
+                                <TextBlock x:Name="SharpeText" Text="Sharpe (ann.): -" Margin="0,4,0,0" />
+                                <TextBlock x:Name="SortinoText" Text="Sortino: -" Margin="0,4,0,0" />
+                                <TextBlock x:Name="TrackingText" Text="Tracking Error: -" Margin="0,4,0,0" />
+                                <TextBlock x:Name="CalmarText" Text="Calmar: -" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+                    <TabItem Header="Frontière efficiente">
+                        <Grid>
+                            <oxy:PlotView x:Name="PlotView" Model="{Binding PlotModel}"/>
+                        </Grid>
+                    </TabItem>
+            </TabControl>
+        </Grid>
+    </Grid>
+</Window>

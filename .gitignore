@@ -1,0 +1,33 @@
+# Visual Studio / .NET
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.userprefs
+*.db
+*.log
+*.nupkg
+*.cache
+*.pdb
+*.ide*
+
+# Rider
+.idea/
+
+# Test results
+TestResults/
+
+# NuGet packages
+packages/
+*.nupkg
+
+# Build outputs
+publish/
+
+# OneDrive temporary files
+~$*
+
+# OS files
+.DS_Store
+Thumbs.db
