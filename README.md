@@ -22,19 +22,27 @@ Librairies utilisées
 
 Formules et indicateurs (rappel)
 --------------------------------
-Notation : N = nombre de périodes (périodicité journalière), m = nombre d'actifs
-- Rendement simple d'une période : r_t = P_t / P_{t-1} - 1
-- Rendement attendu (moyenne simple périodique) : E[R] = mean(r_t)
-- Volatilité périodique (σ_periodic) = stddev(r_t)
-- Annualisation (approx. journalière) :
-  - AnnualReturn ≈ (∏(1+r_t))^{252/N} - 1  (ou mean*252 pour approximation)
-  - AnnualVol ≈ σ_periodic * sqrt(252)
+Notation : N = nombre de périodes (périodicité journalière), m = nombre d'actifs.
 
-- Sharpe (annualisé) : Sharpe = (AnnualReturn - r_f) / AnnualVol
-- Alpha/Beta : issues de la régression linéaire r_p = α + β r_b + ε entre rendements périodiques du portefeuille et du benchmark
-- Information Ratio : IR = mean(r_p - r_b) / std(r_p - r_b)
-- Treynor : Treynor = (AnnualReturn - r_f) / β
-- Max Drawdown : maximum drawdown sur la série cumulative
+- Rendement simple d'une période : `r_t = P_t / P_{t-1} - 1`
+- Rendement attendu (moyenne simple périodique) : `E[R] = mean(r_t)`
+- Volatilité périodique (écart-type) : `σ_periodic = stddev(r_t)`
+- Annualisation (approx. journalière, 252 jours de trading) :
+  - `AnnualReturn ≈ (∏(1+r_t))^(252/N) - 1` (ou approximation `mean(r_t) * 252`)
+  - `AnnualVol ≈ σ_periodic * sqrt(252)`
+
+Indicateurs dérivés :
+- `Sharpe (annualisé) = (AnnualReturn - r_f) / AnnualVol`  
+  (où `r_f` est le taux sans risque annualisé)
+- `Alpha / Beta` : issus d'une régression linéaire entre les rendements périodiques du portefeuille `r_p` et du benchmark `r_b` : `r_p = α + β * r_b + ε`
+- `Information Ratio (IR) = mean(r_p - r_b) / std(r_p - r_b)`
+- `Treynor = (AnnualReturn - r_f) / β`
+- `Max Drawdown` : maximum drawdown calculé sur la série cumulative de la valeur du portefeuille
+
+Notes pratiques :
+- Utiliser des rendements simples ou log selon cohérence du pipeline (mais rester cohérent pour annualisation).  
+- Pour petits échantillons, préférer l'estimateur sans biais (`N-1`) pour l'écart-type.  
+- L'annualisation géométrique (produit) est plus précise que la multiplication simple quand les rendements sont volatils.
 
 Installation et exécution
 -------------------------
